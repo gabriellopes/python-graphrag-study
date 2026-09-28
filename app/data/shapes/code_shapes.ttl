@@ -1,0 +1,18 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ex: <http://example.org/kg-study#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:ExampleCodeShape a sh:NodeShape ;
+    sh:targetClass ex:Example ;
+    sh:property [
+        sh:path ex:codeSnippet ;
+        sh:datatype xsd:string ;
+        sh:minLength 10 ;
+        sh:message "Code snippet must be a non-empty string with at least 10 characters." ;
+    ] ;
+    sh:property [
+        sh:path ex:hasFunctionName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "The code snippet must define an explicit function name." ;
+    ] .

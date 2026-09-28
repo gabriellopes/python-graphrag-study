@@ -1,16 +1,18 @@
-# app/src/verification/z3_verifier.py
-from z3 import Int, Solver, sat
+from z3 import Int, Solver, sat, unsat
 
-class Z3CodeVerifier:
-    """Verifies generated code numeric/logical bounds deterministically."""
+class Z3Verifier:
+    """Proves logical satisfiability for code pre/post-conditions."""
 
     @staticmethod
-    def verify_numeric_bounds(min_val: int, max_val: int) -> bool:
-        x = Int('x')
+    def verify_bounds(val_min: int, val_max: int) -> tuple[bool, str]:
+        val = Int('val')
         s = Solver()
         
-        # Enforce preconditions & postconditions
-        s.add(x >= min_val)
-        s.add(x <= max_val)
+        # Enforce numeric range logic
+        s.add(val >= val_min)
+        s.add(val <= val_max)
         
-        return s.check() == sat
+        result = s.check()
+        if result == sat:
+            return True, "SAT: Logical constraints hold across valid range."
+        return False, f"UNSAT: Logical contradiction or unsat bounds detected ({result})."
