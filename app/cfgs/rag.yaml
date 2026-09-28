@@ -1,0 +1,27 @@
+# app/cfgs/rag.yaml
+app:
+  name: "Python Semantic Brain GraphRAG"
+  version: "1.0.0"
+  description: "Deterministic Self-Correcting Code Synthesis using RDF/SHACL and Z3 SMT"
+
+embeddings:
+  provider: "google"
+  model_name: "gemini-embedding-001"
+
+llm:
+  provider: "gemini"
+  model_name: "gemini-3.5-flash-lite"
+  temperature: 0.1
+  max_retries: 3
+  backoff_factor: 2.0
+
+knowledge_graph:
+  ontology_dir: "app/data/ontology"
+  shapes_dir: "app/data/shapes"
+  main_ontology_file: "TXT.ttl"
+
+verification:
+  shacl_enabled: true
+  z3_enabled: true
+  z3_timeout_ms: 5000
+  max_self_correction_attempts: 3
