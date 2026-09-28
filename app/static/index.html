@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Semantic Brain | Deterministic Pipeline</title>
+    <title>Python Semantic Brain | Interactive Visualizer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
@@ -14,6 +15,8 @@
 </head>
 <body class="min-h-screen p-6 flex flex-col items-center">
 
+    <script>mermaid.initialize({ startOnLoad: false, theme: 'dark' });</script>
+
     <!-- Header -->
     <header class="w-full max-w-6xl flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
         <div>
@@ -22,9 +25,16 @@
             </h1>
             <p class="text-xs text-gray-400 mt-1">Deterministic Code Synthesis & Formal Verification Architecture</p>
         </div>
-        <div id="status-pill" class="flex items-center space-x-2 bg-emerald-950/60 border border-emerald-800 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>SYSTEM ONLINE</span>
+        <div class="flex items-center space-x-4">
+            <select id="problem-select" onchange="loadProblemPreset()" class="bg-gray-900 border border-gray-700 text-xs text-blue-400 code-font p-2 rounded focus:outline-none">
+                <option value="ex:Problem5_6">Problem 5_6 (Passed & Validated)</option>
+                <option value="ex:Problem5_7">Problem 5_7 (Unknown Mapping Error)</option>
+                <option value="ex:Problem5_8">Problem 5_8 (Self-Correction Loop)</option>
+            </select>
+            <div id="status-pill" class="flex items-center space-x-2 bg-emerald-950/60 border border-emerald-800 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>SYSTEM ONLINE</span>
+            </div>
         </div>
     </header>
 
@@ -35,16 +45,9 @@
         <section class="lg:col-span-5 bg-gray-900/80 border border-gray-800 rounded-xl p-5 glow-border flex flex-col">
             <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-3 flex items-center justify-between">
                 <span>Code Input & Intent</span>
-                <span class="text-xs text-blue-400 code-font">ex:Problem5_6</span>
+                <span id="problem-tag" class="text-xs text-blue-400 code-font">ex:Problem5_6</span>
             </h2>
-            <textarea id="code-input" class="w-full flex-grow h-64 bg-gray-950 text-emerald-400 code-font text-xs p-3 rounded-lg border border-gray-800 focus:border-blue-500 focus:outline-none resize-none leading-relaxed" spellcheck="false">
-def check_bounds(val: int) -> bool:
-    """
-    Formulate pre/post-conditions into Z3 SMT constraints
-    to check satisfiability before execution.
-    """
-    return val >= 0 and val <= 100
-            </textarea>
+            <textarea id="code-input" class="w-full flex-grow h-64 bg-gray-950 text-emerald-400 code-font text-xs p-3 rounded-lg border border-gray-800 focus:border-blue-500 focus:outline-none resize-none leading-relaxed" spellcheck="false"></textarea>
 
             <button id="run-btn" onclick="executePipeline()" class="mt-4 w-full bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all shadow-lg flex items-center justify-center space-x-2">
                 <span>Execute Semantic Verification Pipeline</span>
@@ -53,39 +56,75 @@ def check_bounds(val: int) -> bool:
         </section>
 
         <!-- Pipeline DAG Plot View -->
-        <section class="lg:col-span-7 bg-gray-900/80 border border-gray-800 rounded-xl p-5 glow-border">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">
-                    Execution Pipeline Plot
-                </h2>
-                <span id="latency-tag" class="text-xs code-font text-gray-500">Total Latency: -- ms</span>
+        <section class="lg:col-span-7 bg-gray-900/80 border border-gray-800 rounded-xl p-5 glow-border flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">
+                        Execution Pipeline Plot
+                    </h2>
+                    <span id="latency-tag" class="text-xs code-font text-gray-500">Total Latency: -- ms</span>
+                </div>
+
+                <!-- Pipeline Cards Stack -->
+                <div id="pipeline-stack" class="space-y-3">
+                    <div class="p-3 bg-gray-950/60 border border-gray-800 rounded-lg text-xs text-gray-500 text-center py-12">
+                        Click "Execute Semantic Verification Pipeline" to plot real-time execution steps.
+                    </div>
+                </div>
             </div>
 
-            <!-- Pipeline Cards Stack -->
-            <div id="pipeline-stack" class="space-y-3">
-                <div class="p-3 bg-gray-950/60 border border-gray-800 rounded-lg text-xs text-gray-500 text-center py-12">
-                    Click "Execute Semantic Verification Pipeline" to plot real-time execution steps.
+            <!-- Verified Artifact Output Section -->
+            <div id="verified-artifact-box" class="mt-4 p-3 bg-gray-950 border border-emerald-800/60 rounded-lg hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">✓ Verified Code Artifact</span>
+                    <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded">Indexed in Vector Store</span>
                 </div>
+                <pre id="verified-code-display" class="code-font text-xs text-emerald-300 overflow-x-auto leading-relaxed"></pre>
             </div>
         </section>
     </main>
 
     <script>
+        let problemsCache = {};
+
+        async function init() {
+            try {
+                const res = await fetch("/api/v1/problems");
+                problemsCache = await res.json();
+                loadProblemPreset();
+            } catch (err) {
+                console.error("Failed to load problem presets:", err);
+            }
+        }
+
+        function loadProblemPreset() {
+            const pid = document.getElementById("problem-select").value;
+            const prob = problemsCache[pid];
+            if (prob) {
+                document.getElementById("problem-tag").innerText = pid;
+                document.getElementById("code-input").value = prob.code;
+            }
+        }
+
         async function executePipeline() {
             const btn = document.getElementById("run-btn");
             const stack = document.getElementById("pipeline-stack");
             const latencyTag = document.getElementById("latency-tag");
+            const artifactBox = document.getElementById("verified-artifact-box");
+            const verifiedCodeDisplay = document.getElementById("verified-code-display");
             const code = document.getElementById("code-input").value;
+            const pid = document.getElementById("problem-select").value;
 
             btn.disabled = true;
             btn.classList.add("opacity-50");
+            artifactBox.classList.add("hidden");
             stack.innerHTML = `<div class="p-8 text-center text-xs text-blue-400 animate-pulse">Running AST parsing, SHACL validation, and Z3 SMT logic solver...</div>`;
 
             try {
                 const res = await fetch("/api/v1/synthesize", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ code_input: code, problem_id: "ex:Problem5_6" })
+                    body: JSON.stringify({ code_input: code, problem_id: pid })
                 });
 
                 const data = await res.json();
@@ -93,25 +132,43 @@ def check_bounds(val: int) -> bool:
                 stack.innerHTML = "";
 
                 data.pipeline_trace.forEach((step, idx) => {
-                    const isLast = idx === data.pipeline_trace.length - 1;
+                    const statusBg = step.status === "PASSED" ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-red-950 text-red-400 border-red-800";
                     const card = document.createElement("div");
-                    card.className = "p-3.5 bg-gray-950 border border-gray-800 rounded-lg relative transition-all hover:border-gray-700";
+                    card.className = "p-3.5 bg-gray-950 border border-gray-800 rounded-lg relative cursor-pointer transition-all hover:border-gray-700";
                     
                     card.innerHTML = `
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex justify-between items-center mb-1" onclick="toggleStepDetails(${idx})">
                             <div class="flex items-center space-x-2">
                                 <span class="w-5 h-5 rounded-full bg-blue-900/60 text-blue-400 border border-blue-700 flex items-center justify-center text-[10px] font-bold">${step.step_number}</span>
                                 <h3 class="text-xs font-semibold text-gray-200">${step.step_name}</h3>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <span class="text-[10px] code-font text-gray-500">${step.latency_ms} ms</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">${step.status}</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${statusBg}">${step.status}</span>
                             </div>
                         </div>
                         <p class="text-[11px] text-gray-400 pl-7 leading-relaxed">${step.details}</p>
+                        
+                        <!-- Collapsible Deep-Dive Visualizer Drawer -->
+                        <div id="drawer-${idx}" class="hidden mt-3 pl-7 pt-3 border-t border-gray-900">
+                            <div class="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-2">Visual Inspection Matrix</div>
+                            ${step.visual_type === 'mermaid' 
+                                ? `<div id="mermaid-target-${idx}" class="mermaid bg-gray-900 p-2 rounded overflow-x-auto">${step.visual_content}</div>` 
+                                : `<pre class="code-font text-[10px] text-emerald-400 bg-gray-900 p-2 rounded overflow-x-auto">${step.visual_content}</pre>`}
+                        </div>
                     `;
                     stack.appendChild(card);
                 });
+
+                // Render all Mermaid nodes injected into the DOM
+                await mermaid.run({
+                    nodes: document.querySelectorAll('.mermaid')
+                });
+
+                if (data.verified_code && data.status !== "FAILED_UNKNOWN_MAPPING") {
+                    verifiedCodeDisplay.innerText = data.verified_code;
+                    artifactBox.classList.remove("hidden");
+                }
 
             } catch (err) {
                 stack.innerHTML = `<div class="p-4 bg-red-950/50 border border-red-800 text-red-300 rounded-lg text-xs">Pipeline Execution Error: ${err.message}</div>`;
@@ -120,6 +177,21 @@ def check_bounds(val: int) -> bool:
                 btn.classList.remove("opacity-50");
             }
         }
+
+        async function toggleStepDetails(idx) {
+            const drawer = document.getElementById(`drawer-${idx}`);
+            if (drawer) {
+                drawer.classList.toggle("hidden");
+                if (!drawer.classList.contains("hidden")) {
+                    const target = document.getElementById(`mermaid-target-${idx}`);
+                    if (target && !target.querySelector('svg')) {
+                        await mermaid.run({ nodes: [target] });
+                    }
+                }
+            }
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>

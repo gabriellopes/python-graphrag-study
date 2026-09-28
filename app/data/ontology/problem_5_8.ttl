@@ -1,0 +1,14 @@
+@prefix ex: <http://example.org/kg-study#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Problem5_8 a ex:Problem ;
+    rdfs:label "Problem 5_8: Self-Correction Interceptor Loop" ;
+    ex:hasPreCondition "val >= 0" ;
+    ex:hasPostCondition "val <= 100" ;
+    ex:minVal 0 ;
+    ex:maxVal 100 ;
+    ex:defaultCode """def check_bounds(val: int) -> bool:
+    \"\"\"
+    Buggy implementation: fails lower bound check (val >= 0).
+    \"\"\"
+    return val > 100""" .

@@ -1,0 +1,14 @@
+@prefix ex: <http://example.org/kg-study#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Problem5_7 a ex:Problem ;
+    rdfs:label "Problem 5_7: Unknown Entity Mapping Error" ;
+    ex:hasPreCondition "val >= 0" ;
+    ex:hasPostCondition "val <= 100" ;
+    ex:minVal 0 ;
+    ex:maxVal 100 ;
+    ex:defaultCode """def calculate_custom_score(raw_vector: dict) -> float:
+    \"\"\"
+    Contains unmapped domain function and dictionary type.
+    \"\"\"
+    return raw_vector.get('val') * 2.5""" .
