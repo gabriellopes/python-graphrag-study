@@ -1,0 +1,68 @@
+@prefix ex: <http://example.org/kg-study#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:StudyOntology a owl:Ontology ;
+    rdfs:label "Interview Study Strategy Knowledge Graph Ontology" .
+
+# --- Classes ---
+ex:Module a owl:Class ;
+    rdfs:label "Study Module" .
+
+ex:Category a owl:Class ;
+    rdfs:label "Concept Category" .
+
+ex:Question a owl:Class ;
+    rdfs:label "Interview Question" .
+
+ex:Example a owl:Class ;
+    rdfs:label "Code / Implementation Example" .
+
+ex:Problem a owl:Class ;
+    rdfs:label "Systemic Problem" .
+
+ex:Solution a owl:Class ;
+    rdfs:label "Architecture Solution" .
+
+# --- Properties ---
+ex:hasCategory a owl:ObjectProperty ;
+    rdfs:domain ex:Module ;
+    rdfs:range ex:Category .
+
+ex:hasQuestion a owl:ObjectProperty ;
+    rdfs:domain ex:Category ;
+    rdfs:range ex:Question .
+
+ex:hasExample a owl:ObjectProperty ;
+    rdfs:domain ex:Question ;
+    rdfs:range ex:Example .
+
+ex:solvesProblem a owl:ObjectProperty ;
+    rdfs:domain ex:Solution ;
+    rdfs:range ex:Problem ;
+    owl:inverseOf ex:hasSolution .
+
+ex:hasSolution a owl:ObjectProperty ;
+    rdfs:domain ex:Problem ;
+    rdfs:range ex:Solution ;
+    owl:inverseOf ex:solvesProblem .
+
+ex:usesModule a owl:ObjectProperty ;
+    rdfs:domain ex:Problem ;
+    rdfs:range ex:Module .
+
+ex:questionText a owl:DatatypeProperty ;
+    rdfs:domain ex:Question ;
+    rdfs:range xsd:string .
+
+ex:answerText a owl:DatatypeProperty ;
+    rdfs:domain ex:Question ;
+    rdfs:range xsd:string .
+
+ex:codeSnippet a owl:DatatypeProperty ;
+    rdfs:domain ex:Example ;
+    rdfs:range xsd:string .
+
+rdfs:seeAlso a owl:AnnotationProperty .

@@ -1,0 +1,43 @@
+@prefix ex: <http://example.org/kg-study#> .
+
+ex:Q1_1 ex:hasExample ex:Ex1_1 .
+ex:Ex1_1 a ex:Example ;
+    ex:codeSnippet """
+import gc
+class Node: pass
+a, b = Node(), Node()
+a.ref, b.ref = b, a
+del a, b
+gc.collect()
+""" .
+
+ex:Q2_1 ex:hasExample ex:Ex2_1 .
+ex:Ex2_1 a ex:Example ;
+    ex:codeSnippet """
+from functools import wraps
+def audit(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+""" .
+
+ex:Q3_1 ex:hasExample ex:Ex3_1 .
+ex:Ex3_1 a ex:Example ;
+    ex:codeSnippet """
+import asyncio
+from concurrent.futures import ProcessPoolExecutor
+loop = asyncio.get_running_loop()
+with ProcessPoolExecutor() as pool:
+    res = await loop.run_in_executor(pool, heavy_cpu_func, data)
+""" .
+
+ex:Q4_1 ex:hasExample ex:Ex4_1 .
+ex:Ex4_1 a ex:Example ;
+    ex:codeSnippet """
+from z3 import Int, Solver, unsat
+x = Int('x')
+s = Solver()
+s.add(x > 10, x < 5)
+assert s.check() == unsat
+""" .

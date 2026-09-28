@@ -1,0 +1,30 @@
+@prefix ex: <http://example.org/kg-study#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Question 1.1
+ex:CatMemoryManagement ex:hasQuestion ex:Q1_1 .
+ex:Q1_1 a ex:Question ;
+    ex:questionText "How does Python manage memory under the hood (Ref Count vs GC)?" ;
+    ex:answerText "Primary memory management uses reference counting. Cyclic references are handled via Generational GC." ;
+    rdfs:seeAlso <https://docs.python.org/3/c-api/memory.html> .
+
+# Question 2.1
+ex:CatDecorators ex:hasQuestion ex:Q2_1 .
+ex:Q2_1 a ex:Question ;
+    ex:questionText "How do Decorators work under the hood, and how do you preserve metadata?" ;
+    ex:answerText "Decorators wrap callables. Preserving metadata requires @functools.wraps(func)." ;
+    rdfs:seeAlso <https://docs.python.org/3/library/functools.html#functools.wraps> .
+
+# Question 3.1
+ex:CatGIL ex:hasQuestion ex:Q3_1 .
+ex:Q3_1 a ex:Question ;
+    ex:questionText "What is the GIL and how do you choose between asyncio, threading, and multiprocessing?" ;
+    ex:answerText "GIL prevents multi-thread bytecode execution. Asyncio handles I/O, multiprocessing handles CPU tasks." ;
+    rdfs:seeAlso <https://docs.python.org/3/c-api/init.html#thread-state-and-the-global-interpreter-lock> .
+
+# Question 4.1
+ex:CatSMTSolvers ex:hasQuestion ex:Q4_1 .
+ex:Q4_1 a ex:Question ;
+    ex:questionText "How does Z3 SMT solver differ from an OWL reasoner?" ;
+    ex:answerText "OWL operates under OWA for classification. Z3 uses CWA for first-order logic constraints." ;
+    rdfs:seeAlso <https://github.com/Z3Prover/z3/wiki> .

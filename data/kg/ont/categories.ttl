@@ -1,0 +1,17 @@
+@prefix ex: <http://example.org/kg-study#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Module 1 Categories
+ex:Module1 ex:hasCategory ex:CatMemoryManagement, ex:CatObjectIdentity, ex:CatDataStructures .
+
+# Module 2 Categories
+ex:Module2 ex:hasCategory ex:CatDecorators, ex:CatGenerators, ex:CatMetaprogramming, ex:CatDescriptors .
+
+# Module 3 Categories
+ex:Module3 ex:hasCategory ex:CatGIL, ex:CatAsyncio .
+
+# Module 4 Categories
+ex:Module4 ex:hasCategory ex:CatSMTSolvers, ex:CatSemanticMapping, ex:CatASTManipulation, ex:CatSHACLValidation .
+
+# Module 5 Categories
+ex:Module5 ex:hasCategory ex:CatLLMValidation, ex:CatGraphPerformance .

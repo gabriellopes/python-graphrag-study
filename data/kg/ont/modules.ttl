@@ -1,0 +1,17 @@
+@prefix ex: <http://example.org/kg-study#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Module1 a ex:Module ;
+    rdfs:label "Module 1: Python Memory Management & Data Structures" .
+
+ex:Module2 a ex:Module ;
+    rdfs:label "Module 2: Advanced Language Mechanics & Metaprogramming" .
+
+ex:Module3 a ex:Module ;
+    rdfs:label "Module 3: Concurrency & Async Architecture" .
+
+ex:Module4 a ex:Module ;
+    rdfs:label "Module 4: Symbolic AI, Constraints & Deterministic Generation" .
+
+ex:Module5 a ex:Module ;
+    rdfs:label "Module 5: Systemic Problems & Architecture Solutions" .
