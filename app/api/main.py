@@ -104,7 +104,24 @@ def read_root():
 def get_problems():
     return load_ontology_problems()
 
-
+@app.get("/api/v1/vector-memory/{problem_id:path}")
+def get_vector_memory(problem_id: str):
+    """Live queries the vector memory buffer using the correct LlamaIndex search method."""
+    try:
+        # Use search_solutions as defined in KnowledgeVectorStore
+        solutions = vector_db.search_solutions(problem_id, similarity_top_k=3)
+        
+        return {
+            "status": "SUCCESS",
+            "problem_id": problem_id,
+            "retrieved_memories": solutions if solutions else ["No verified solutions indexed for this problem yet."]
+        }
+    except Exception as e:
+        return {
+            "status": "ERROR",
+            "details": str(e)
+        }
+    
 @app.post("/api/v1/synthesize")
 def synthesize_and_verify(req: SynthesisRequest):
     start_time = time.time()
@@ -219,7 +236,12 @@ def synthesize_and_verify(req: SynthesisRequest):
         # Step 5: Z3 Logic Verification
         t0 = time.time()
         try:
-            is_sat, z3_msg = agent.z3.verify_bounds(val_min=min_v, val_max=max_v)
+            # Pass req.code_input here so Z3 can inspect the function's logic!
+            is_sat, z3_msg = agent.z3.verify_bounds(
+                min_val=min_v, 
+                max_val=max_v, 
+                code_input=req.code_input
+            )
         except Exception as z3_err:
             is_sat, z3_msg = False, f"Z3 Execution Error: {str(z3_err)}"
         t1 = time.time()
@@ -253,20 +275,32 @@ def synthesize_and_verify(req: SynthesisRequest):
             "visual_content": f"# Output Code Artifact:\n{verified_code}"
         })
 
+        # --- Enhanced Logging & Vector Store Persistence ---
+        indexing_confirmation = "No new embedding required (code already valid)."
         if status_str == "VERIFIED_AND_ENRICHED":
             try:
                 vector_db.add_verified_solution(req.problem_id, verified_code)
+                indexing_confirmation = f"SUCCESS: Embedded & indexed solution for {req.problem_id} into vector store!"
+                
+                # Terminal Console Logging
+                print("\n" + "~" * 50)
+                print(f"🧠 [SEMANTIC BRAIN] Vector Store Persistence Triggered")
+                print(f"📌 Problem ID: {req.problem_id}")
+                print(f"📝 Verified Code Snippet:\n{verified_code}")
+                print("~" * 50 + "\n")
+                
             except Exception as v_err:
-                print(f"Vector DB indexing error: {v_err}")
+                indexing_confirmation = f"Vector DB indexing error: {v_err}"
+                print(f"❌ [VECTOR STORE ERROR] {v_err}")
 
         pipeline_trace.append({
             "step_number": step_num + 4,
             "step_name": "KG Enrichment & Embedding",
             "latency_ms": 1.2,
             "status": "PASSED",
-            "details": "Triples synthesized into GraphDB and embedded in vector store.",
+            "details": indexing_confirmation,
             "visual_type": "mermaid",
-            "visual_content": f"graph TD\n  ExGen[ex:ExGenerated_01] -->|rdf:type| Solution[ex:Solution]\n  ExGen -->|ex:solves| Prob[\"{req.problem_id}\"]\n  ExGen -->|ex:vectorStoreId| VectorStore[LlamaIndex Store]"
+            "visual_content": f"graph TD\n  ExGen[ex:ExGenerated_01] -->|rdf:type| Solution[ex:Solution]\n  ExGen -->|ex:solves| Prob[\"{req.problem_id}\"]\n  ExGen -->|ex:vectorStoreId| VectorStore[LlamaIndex Store: Indexed ✓]"
         })
 
         return {

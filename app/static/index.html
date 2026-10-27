@@ -53,6 +53,21 @@
                 <span>Execute Semantic Verification Pipeline</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </button>
+            
+            <!-- Vector Memory Inspector Control -->
+            <button onclick="inspectVectorMemory()" class="mt-2 w-full bg-blue-950/50 hover:bg-blue-900/60 text-blue-300 border border-blue-800/80 py-2 px-3 rounded-lg text-xs transition-all flex items-center justify-center space-x-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <span>Inspect Vector Memory Buffer</span>
+            </button>
+
+            <!-- Vector Memory Inspection Drawer -->
+            <div id="memory-modal" class="hidden mt-3 p-3 bg-gray-950 border border-blue-800/60 rounded-lg">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider">🧠 Vector Store Memory Inspector</span>
+                    <button onclick="document.getElementById('memory-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-300 text-xs">✕ Close</button>
+                </div>
+                <pre id="memory-content" class="code-font text-[10px] text-blue-200 overflow-x-auto leading-relaxed p-2 bg-gray-900 rounded max-h-40"></pre>
+            </div>
         </section>
 
         <!-- Pipeline DAG Plot View -->
@@ -63,6 +78,15 @@
                         Execution Pipeline Plot
                     </h2>
                     <span id="latency-tag" class="text-xs code-font text-gray-500">Total Latency: -- ms</span>
+                </div>
+
+                <!-- Live Vector Store Indexing Notification Banner -->
+                <div id="vector-store-banner" class="hidden mb-4 p-3 bg-emerald-950/80 border border-emerald-700/80 rounded-lg text-xs text-emerald-300 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span id="vector-banner-text" class="font-semibold code-font">Vector Store Persistence Confirmed: Solution embedded successfully.</span>
+                    </div>
+                    <span class="text-[10px] bg-emerald-900 text-emerald-200 px-2 py-0.5 rounded border border-emerald-600">LlamaIndex Sync ✓</span>
                 </div>
 
                 <!-- Pipeline Cards Stack -->
@@ -107,101 +131,124 @@
         }
 
         async function executePipeline() {
-    const btn = document.getElementById("run-btn");
-    const stack = document.getElementById("pipeline-stack");
-    const latencyTag = document.getElementById("latency-tag");
-    const artifactBox = document.getElementById("verified-artifact-box");
-    const verifiedCodeDisplay = document.getElementById("verified-code-display");
-    const code = document.getElementById("code-input").value;
-    const pid = document.getElementById("problem-select").value;
-
-    btn.disabled = true;
-    btn.classList.add("opacity-50");
-    artifactBox.classList.add("hidden");
-    stack.innerHTML = `<div class="p-8 text-center text-xs text-blue-400 animate-pulse">Running AST parsing, SHACL validation, and Z3 SMT logic solver...</div>`;
-
-    try {
-        const res = await fetch("/api/v1/synthesize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code_input: code, problem_id: pid })
-        });
-
-        const data = await res.json();
-        latencyTag.innerText = `Total Latency: ${data.total_latency_ms} ms`;
-        stack.innerHTML = "";
-
-        data.pipeline_trace.forEach((step, idx) => {
-            const statusBg = step.status === "PASSED" ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-red-950 text-red-400 border-red-800";
-            const card = document.createElement("div");
-            card.className = "p-3.5 bg-gray-950 border border-gray-800 rounded-lg relative transition-all hover:border-gray-700";
+            const btn = document.getElementById("run-btn");
+            const stack = document.getElementById("pipeline-stack");
+            const latencyTag = document.getElementById("latency-tag");
+            const artifactBox = document.getElementById("verified-artifact-box");
+            const verifiedCodeDisplay = document.getElementById("verified-code-display");
+            const vectorBanner = document.getElementById("vector-store-banner");
+            const vectorBannerText = document.getElementById("vector-banner-text");
             
-            // Auto-expand step 1 drawer by default
-            const isDefaultOpen = idx < 3 ? "" : "hidden";
+            const code = document.getElementById("code-input").value;
+            const pid = document.getElementById("problem-select").value;
 
-            card.innerHTML = `
-                <div class="flex justify-between items-center mb-1 cursor-pointer" onclick="toggleStepDetails(${idx})">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-5 h-5 rounded-full bg-blue-900/60 text-blue-400 border border-blue-700 flex items-center justify-center text-[10px] font-bold">${step.step_number}</span>
-                        <h3 class="text-xs font-semibold text-gray-200">${step.step_name}</h3>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-[10px] code-font text-gray-500">${step.latency_ms} ms</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${statusBg}">${step.status}</span>
-                    </div>
-                </div>
-                <p class="text-[11px] text-gray-400 pl-7 leading-relaxed">${step.details}</p>
-                
-                <!-- Collapsible Deep-Dive Visualizer Drawer -->
-                <div id="drawer-${idx}" class="${isDefaultOpen} mt-3 pl-7 pt-3 border-t border-gray-900">
-                    <div class="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-2">Visual Inspection Matrix</div>
-                    ${step.visual_type === 'mermaid' 
-                        ? `<div id="mermaid-target-${idx}" class="mermaid bg-gray-900 p-3 rounded overflow-x-auto min-h-[60px] text-xs">${step.visual_content}</div>` 
-                        : `<pre class="code-font text-[10px] text-emerald-400 bg-gray-900 p-2 rounded overflow-x-auto">${step.visual_content}</pre>`}
-                </div>
-            `;
-            stack.appendChild(card);
-        });
+            btn.disabled = true;
+            btn.classList.add("opacity-50");
+            artifactBox.classList.add("hidden");
+            vectorBanner.classList.add("hidden");
+            stack.innerHTML = `<div class="p-8 text-center text-xs text-blue-400 animate-pulse">Running AST parsing, SHACL validation, and Z3 SMT logic solver...</div>`;
 
-        // Trigger Mermaid rendering after elements exist in DOM and drawer is unhidden
-        setTimeout(async () => {
-            const openTargets = document.querySelectorAll('.mermaid');
-            if (openTargets.length > 0) {
-                await mermaid.run({ nodes: Array.from(openTargets) });
+            try {
+                const res = await fetch("/api/v1/synthesize", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code_input: code, problem_id: pid })
+                });
+
+                const data = await res.json();
+                latencyTag.innerText = `Total Latency: ${data.total_latency_ms} ms`;
+                stack.innerHTML = "";
+
+                data.pipeline_trace.forEach((step, idx) => {
+                    const statusBg = step.status === "PASSED" ? "bg-emerald-950 text-emerald-400 border-emerald-800" : "bg-red-950 text-red-400 border-red-800";
+                    const card = document.createElement("div");
+                    card.className = "p-3.5 bg-gray-950 border border-gray-800 rounded-lg relative transition-all hover:border-gray-700";
+                    
+                    const isDefaultOpen = idx < 3 ? "" : "hidden";
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-1 cursor-pointer" onclick="toggleStepDetails(${idx})">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-5 h-5 rounded-full bg-blue-900/60 text-blue-400 border border-blue-700 flex items-center justify-center text-[10px] font-bold">${step.step_number}</span>
+                                <h3 class="text-xs font-semibold text-gray-200">${step.step_name}</h3>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] code-font text-gray-500">${step.latency_ms} ms</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${statusBg}">${step.status}</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-gray-400 pl-7 leading-relaxed">${step.details}</p>
+                        
+                        <div id="drawer-${idx}" class="${isDefaultOpen} mt-3 pl-7 pt-3 border-t border-gray-900">
+                            <div class="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-2">Visual Inspection Matrix</div>
+                            ${step.visual_type === 'mermaid' 
+                                ? `<div id="mermaid-target-${idx}" class="mermaid bg-gray-900 p-3 rounded overflow-x-auto min-h-[60px] text-xs">${step.visual_content}</div>` 
+                                : `<pre class="code-font text-[10px] text-emerald-400 bg-gray-900 p-2 rounded overflow-x-auto">${step.visual_content}</pre>`}
+                        </div>
+                    `;
+                    stack.appendChild(card);
+                });
+
+                setTimeout(async () => {
+                    const openTargets = document.querySelectorAll('.mermaid');
+                    if (openTargets.length > 0) {
+                        await mermaid.run({ nodes: Array.from(openTargets) });
+                    }
+                }, 100);
+
+                if (data.verified_code && data.status !== "FAILED_UNKNOWN_MAPPING") {
+                    verifiedCodeDisplay.innerText = data.verified_code;
+                    artifactBox.classList.remove("hidden");
+                }
+
+                if (data.status === "VERIFIED_AND_ENRICHED") {
+                    vectorBannerText.innerText = `Vector Store Persistence Confirmed: Fixed solution for ${pid} successfully embedded & indexed!`;
+                    vectorBanner.classList.remove("hidden");
+                }
+
+            } catch (err) {
+                stack.innerHTML = `<div class="p-4 bg-red-950/50 border border-red-800 text-red-300 rounded-lg text-xs">Pipeline Execution Error: ${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove("opacity-50");
             }
-        }, 100);
-
-        if (data.verified_code && data.status !== "FAILED_UNKNOWN_MAPPING") {
-            verifiedCodeDisplay.innerText = data.verified_code;
-            artifactBox.classList.remove("hidden");
         }
 
-    } catch (err) {
-        stack.innerHTML = `<div class="p-4 bg-red-950/50 border border-red-800 text-red-300 rounded-lg text-xs">Pipeline Execution Error: ${err.message}</div>`;
-    } finally {
-        btn.disabled = false;
-        btn.classList.remove("opacity-50");
-    }
-}
+        async function inspectVectorMemory() {
+            const pid = document.getElementById("problem-select").value;
+            const modal = document.getElementById("memory-modal");
+            const content = document.getElementById("memory-content");
 
-async function toggleStepDetails(idx) {
-    const drawer = document.getElementById(`drawer-${idx}`);
-    if (drawer) {
-        const isOpening = drawer.classList.contains("hidden");
-        drawer.classList.toggle("hidden");
-        
-        if (isOpening) {
-            const target = document.getElementById(`mermaid-target-${idx}`);
-            if (target && !target.querySelector('svg')) {
-                try {
-                    await mermaid.run({ nodes: [target] });
-                } catch (e) {
-                    console.error("Mermaid parsing error:", e);
+            modal.classList.remove("hidden");
+            content.innerText = `Querying LlamaIndex vector store buffer for ${pid}...`;
+
+            try {
+                const res = await fetch(`/api/v1/vector-memory/${encodeURIComponent(pid)}`);
+                const data = await res.json();
+                content.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                content.innerText = `Failed to query vector store memory: ${err.message}`;
+            }
+        }
+
+        async function toggleStepDetails(idx) {
+            const drawer = document.getElementById(`drawer-${idx}`);
+            if (drawer) {
+                const isOpening = drawer.classList.contains("hidden");
+                drawer.classList.toggle("hidden");
+                
+                if (isOpening) {
+                    const target = document.getElementById(`mermaid-target-${idx}`);
+                    if (target && !target.querySelector('svg')) {
+                        try {
+                            await mermaid.run({ nodes: [target] });
+                        } catch (e) {
+                            console.error("Mermaid parsing error:", e);
+                        }
+                    }
                 }
             }
         }
-    }
-}
 
         window.onload = init;
     </script>
