@@ -1,7 +1,29 @@
 
-# python study case 4 deterministically self-improving code-writer z3 verifier shacl-shaped minimal program
+# python Study Case 4 deterministically self-improving code-writer z3 verifier shacl-shaped minimal program (Semantic Self-Learner Python Brain)
 
 
+- clone the project; add an .env with your GEMINI_API_KEY and run uvicorn app-api.main:app --reload after having properly pip installing the requirements (pip install -r requirements.txt)
+
+
+## minor bugs 
+
+sometimes the display code will be froze due to buffering at the page; just refresh it and try a new problem;
+
+- some problems wont need a memory cached solution in order to re-run and pass, as the brain has already stored it as a possible solution;
+
+- if the unknown mapping is not working, probably the memory buffer is full and/or the connection to the LLM is not working properly;
+
+## Incoming Version
+
+A new version of this project is under work, in order to incrementally enrich the Memory of the Agent in order to propose coding-solutions for the problems yet not covered by the Semantic Brain;
+
+Ex:
+    'AST translation fallback triggered: Unsupported AST node type: <class 'ast.BinOp'>'
+
+    > Agents proposes a new code; 
+    > Test it, Validates it;
+    > Leverage the new solution to its inner memory (either in Buffer, Sqlite, or Cloudy)
+    > Even without inserting new code to the actual project, the Agent will Remember the solution, and use it, for those cases yet unsolved.
 
 ## exec pipeline
 
